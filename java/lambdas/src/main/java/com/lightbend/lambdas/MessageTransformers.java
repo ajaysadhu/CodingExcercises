@@ -6,26 +6,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class MessageTransformers {
-    static MessageTransformer<String> toString = new MessageTransformer<String>() {
-        @Override
-        public String apply(Message message) {
-            return message.toString();
-        }
-    };
 
-    static MessageTransformer<Instant> toTimestamp = new MessageTransformer<Instant>() {
-        @Override
-        public Instant apply(Message message) {
-            return message.getTimestamp();
-        }
-    };
+    /*
+        Lambda style:
+            (Parameter param, Parameter param2) -> { return someValue; }
+     */
+    static MessageTransformer<String> toString = Message::toString;
 
-    static MessageTransformer<Message> toUpperCase = new MessageTransformer<Message>() {
-        @Override
-        public Message apply(Message message) {
-            return new Message(message.getId(), message.getTimestamp(), message.getContent().toUpperCase());
-        }
-    };
+    static MessageTransformer<Instant> toTimestamp = Message::getTimestamp;
+
+    static MessageTransformer<Message> toUpperCase = message->  new Message(message.getId(), message.getTimestamp(), message.getContent().toUpperCase());
 
     static <T> List<T> mapMessages(List<Message> messages, MessageTransformer<T> transformer) {
         return messages
