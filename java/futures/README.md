@@ -21,3 +21,29 @@ Instead of thenCompose and thenApply there are other ways
     - thenAccept : Executes a Consumer once future Completes
     - thenCombine: Combines results of two futures using a Bi Function
 ```
+
+### Executors
+Futures are executed in a separate thread or thread pool. Managed by Executor or Executor Service.
+Executor Service is an implementation of an Executor, leave default to faster ones.
+
+If no Executor is provided, default is used.
+Again there could be Contention if all non-blocking code uses same default Executor.
+Better to isolate blocking operations to their owb Executor.
+
+```
+// Creates new threads if all threads blocked
+ExecutorService executor = Executors.newCachedThreadPool();
+
+// Maintains specific active threads
+// May use multiple queues to reduce contention 
+ExecutorService executor = Executors.newWorkStealingPool(10);
+
+// Fixed no of threads
+ExecutorService executor = Executors.newFixedThreadPool(10);
+```
+
+Wrap Up:
+- Blocking Calls
+- Futures
+- Transforming Futures
+- Executors

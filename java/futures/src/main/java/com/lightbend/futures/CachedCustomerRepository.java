@@ -1,9 +1,13 @@
 package com.lightbend.futures;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -12,11 +16,12 @@ interface CustomerRepository {
     CompletableFuture<Optional<Customer>> getCustomer(UUID customerId);
 }
 
-class CachedCustomerRepository implements CustomerRepository {
+class CachedCustomerRepository implements CustomerRepository, Closeable {
 
     private ObjectStore objectStore;
     private ConcurrentHashMap<UUID, Customer> cache = new ConcurrentHashMap<>();
     private ReadWriteLock lock = new ReentrantReadWriteLock();
+    private ExecutorService executor = Executors.newFixedThreadPool(10);
 
     CachedCustomerRepository(ObjectStore objectStore) {
         this.objectStore = objectStore;
@@ -31,7 +36,7 @@ class CachedCustomerRepository implements CustomerRepository {
             cache.put(customer.getId(), customer);
 
             lock.writeLock().unlock();
-        });
+        }, executor);
 
     }
 
@@ -47,11 +52,18 @@ class CachedCustomerRepository implements CustomerRepository {
             result = CompletableFuture.completedFuture(Optional.of(cache.get(customerId)));
         } else {
             // Asynchronous Operation that returns Completable Future of Customer.
-            result = CompletableFuture.supplyAsync(()-> objectStore.read(customerId).map(obj -> (Customer) obj));
+            result = CompletableFuture
+                    .supplyAsync(()-> objectStore.read(customerId).map(obj -> (Customer) obj), executor);
         }
 
         lock.readLock().unlock();
 
         return result;
+    }
+
+    @Override
+    public void close(){
+        // When Repository is closed, all executor threads will be closed
+        executor.shutdown();
     }
 }

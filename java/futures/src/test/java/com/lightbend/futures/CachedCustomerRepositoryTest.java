@@ -1,5 +1,6 @@
 package com.lightbend.futures;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -88,5 +89,10 @@ class CachedCustomerRepositoryTest {
         verify(objectStore, times(1)).read(customer2.getId());
         assertTrue(result1.isPresent());
         assertTrue(result2.isPresent());
+    }
+
+    @AfterEach
+    void tearDown() {
+        repository.close();
     }
 }
